@@ -51,12 +51,17 @@ static uint8_t stack_a[4096];
 static uint8_t stack_b[4096];
 static uint8_t stack_c[4096];
 static uint8_t stack_d[4096];
+
+static uint8_t user_stack_a[4096];
+static uint8_t user_stack_b[4096];
+static uint8_t user_stack_c[4096];
+static uint8_t user_stack_d[4096];
 /*
  * Jeder Task braucht seinen eigenen Stack, auf dem er beliebig arbeiten kann,
  * ohne dass ihm andere Tasks Dinge ueberschreiben. Ausserdem braucht ein Task
  * einen Einsprungspunkt.
  */
-struct cpu_state* init_task(uint8_t* stack, void* entry)
+struct cpu_state* init_task(uint8_t* stack, uint8_t* user_stack, void* entry)
 {
     /*
      * CPU-Zustand fuer den neuen Task festlegen
@@ -69,12 +74,12 @@ struct cpu_state* init_task(uint8_t* stack, void* entry)
         .esi = 0,
         .edi = 0,
         .ebp = 0,
-        //.esp = unbenutzt (kein Ring-Wechsel)
+        .esp = (uint32_t) user_stack, // doing user task yeah :)
         .eip = (uint32_t) entry,
 
         /* Ring-0-Segmentregister */
-        .cs  = 0x08,
-        //.ss  = unbenutzt (kein Ring-Wechsel)
+        .cs  = 0x18 | 0x03,
+        .ss  = 0x20 | 0x03, // another yeah requierd here :)
 
         /* IRQs einschalten (IF = 1) */
         .eflags = 0x200,
@@ -98,10 +103,10 @@ static struct cpu_state* task_states[4];
 
 void init_multitasking(void)
 {
-    task_states[0] = init_task(stack_a, task_a);
-    task_states[1] = init_task(stack_b, task_b);
-	task_states[2] = init_task(stack_c, task_c);
-    task_states[3] = init_task(stack_d, task_d);
+    task_states[0] = init_task(stack_a, user_stack_a, task_a);
+    task_states[1] = init_task(stack_b, user_stack_b, task_b);
+	task_states[2] = init_task(stack_c, user_stack_c, task_c);
+    task_states[3] = init_task(stack_d, user_stack_d, task_d);
 }
 
 /*

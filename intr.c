@@ -53,8 +53,9 @@ extern void intr_stub_48(void);
 #define GDT_FLAG_4K      0x800
 #define GDT_FLAG_32_BIT  0x400
 
-#define GDT_ENTRIES 5
+#define GDT_ENTRIES 6
 static uint64_t gdt[GDT_ENTRIES];
+static uint32_t tss[32] = { 0, 0, 0x10 };
 
 #define IDT_ENTRIES 256
 static long long unsigned int idt[IDT_ENTRIES];
@@ -87,6 +88,7 @@ void init_gdt(void)
     gdt_set_entry(2, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT | GDT_FLAG_DATASEG | GDT_FLAG_4K | GDT_FLAG_PRESENT);
     gdt_set_entry(3, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT | GDT_FLAG_CODESEG | GDT_FLAG_4K | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
     gdt_set_entry(4, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT | GDT_FLAG_DATASEG | GDT_FLAG_4K | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
+    gdt_set_entry(5, (uint32_t)tss, sizeof(tss), GDT_FLAG_TSS | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
 
     // GDT neu laden
     asm volatile("lgdt %0" : : "m" (gdtp));
@@ -101,6 +103,8 @@ void init_gdt(void)
         "ljmp $0x8, $.1;"
         ".1:"
     );
+    // reload task register
+    asm volatile("ltr %%ax" : : "a" (5 << 3));
 }
 
 #define IDT_FLAG_INTERRUPT_GATE 0xe
@@ -231,9 +235,10 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
     }
     else if (cpu->intr >= 0x20 && cpu->intr <= 0x2f)
     {
-        if (cpu->intr == 0x20)
+        if (cpu->intr == 0x20) // timer interrupt, let's schedule
         {
 			new_cpu = schedule(cpu);
+			tss[1] = (uint32_t) (new_cpu + 1);
 		}
         if (cpu->intr >= 0x28)
         {
