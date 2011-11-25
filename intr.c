@@ -209,26 +209,27 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
     struct cpu_state* new_cpu = cpu;
     if (cpu->intr <= 0x1f)
     {
-		kprintf("Exception %d, Kernel angehalten!\n", cpu->intr);
-		kprintf("eax: %b\n"
-		"ebx: %b\n"
-		"ecx: %b\n"
-		"edx: %b\n"
-		"esi: %b\n"
-		"edi: %b\n"
-		"ebp: %b\n"
-		"eip: %b\n"
-		"cs : %b\n"
-		"eflags: %b\n"
-		"esp: %b\n"
-		"ss : %b\n");        
+		kprintf("\nException %d, Kernel angehalten!\n", cpu->intr);
+		kprintf("eax: %x\n"
+		"ebx: %x\n"
+		"ecx: %x\n"
+		"edx: %x\n"
+		"esi: %x\n"
+		"edi: %x\n"
+		"ebp: %x\n"
+		"eip: %x\n"
+		"cs : %x\n"
+		"eflags: %x\n"
+		"esp: %x\n"
+		"ss : %x\n",cpu->eax,cpu->ebx,cpu->ecx,cpu->edx,cpu->esi,cpu->edi,cpu->ebp,cpu->eip,cpu->cs,cpu->eflags,cpu->esp,cpu->ss);        
 
         while(1)
         {
             // Prozessor anhalten
             asm volatile("cli; hlt");
         }
-    } else if (cpu->intr >= 0x20 && cpu->intr <= 0x2f)
+    }
+    else if (cpu->intr >= 0x20 && cpu->intr <= 0x2f)
     {
         if (cpu->intr == 0x20)
         {

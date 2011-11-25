@@ -4,11 +4,11 @@
 void init(void)
 {
 	clrscr();
-	kprintf("Hello World!\nNow should be all ready :D\nTest: %d\n",22);
-	kprintf("\tTabbed?\n");
+	kprintf("Weclome to codename 'Banana'!\n\nFirst timer interrupt will initiate the scheduler...\n");
 	
 	init_gdt();
 	init_intr();
+	init_multitasking();
 	
-	asm volatile("int $0x20");
+	//asm volatile("int $0x20");
 }

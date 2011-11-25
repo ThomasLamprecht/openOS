@@ -1,23 +1,56 @@
 #include "console.h"
 #include "intr.h"
 
+
+void idle()
+{
+	asm volatile("jmp .");
+}
 static void task_a(void)
 {
-    while (1) {
+	int i;
+    for(i=0;i<200;i++)
+    {
         kprintf("A");
     }
+    idle();
 }
 
 static void task_b(void)
 {
-    while (1) {
+	int i;
+    for(i=0;i<200;i++)
+    {
         kprintf("B");
     }
+    idle();
+}
+
+static void task_c(void)
+{
+	int i;
+	asm volatile("cli");
+    for(i=0;i<200;i++)
+    {
+        kprintf("C");
+    }
+    idle();
+}
+
+static void task_d(void)
+{
+	int i;
+    for(i=0;i<200;i++)
+    {
+        kprintf("D");
+    }
+    idle();
 }
 
 static uint8_t stack_a[4096];
 static uint8_t stack_b[4096];
-
+static uint8_t stack_c[4096];
+static uint8_t stack_d[4096];
 /*
  * Jeder Task braucht seinen eigenen Stack, auf dem er beliebig arbeiten kann,
  * ohne dass ihm andere Tasks Dinge ueberschreiben. Ausserdem braucht ein Task
@@ -60,13 +93,15 @@ struct cpu_state* init_task(uint8_t* stack, void* entry)
 }
 
 static int current_task = -1;
-static int num_tasks = 2;
-static struct cpu_state* task_states[2];
+static int num_tasks = 4;
+static struct cpu_state* task_states[4];
 
 void init_multitasking(void)
 {
     task_states[0] = init_task(stack_a, task_a);
     task_states[1] = init_task(stack_b, task_b);
+	task_states[2] = init_task(stack_c, task_c);
+    task_states[3] = init_task(stack_d, task_d);
 }
 
 /*
@@ -81,7 +116,8 @@ struct cpu_state* schedule(struct cpu_state* cpu)
      * gerade zum ersten Mal in einen Task. Diesen Prozessorzustand brauchen
      * wir spaeter nicht wieder.
      */
-    if (current_task >= 0) {
+    if (current_task >= 0)
+    {
         task_states[current_task] = cpu;
     }
 
