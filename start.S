@@ -23,6 +23,7 @@ _start:
     mov $kernel_stack, %esp
  
     // C-Code aufrufen
+	push %ebx
     call init
  
 

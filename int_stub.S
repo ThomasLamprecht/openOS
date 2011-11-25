@@ -51,7 +51,6 @@ intr_stub 44
 intr_stub 45
 intr_stub 46
 intr_stub 47
-// usw. bis 47
 
 // Syscall
 intr_stub 48
@@ -66,12 +65,14 @@ intr_common_handler:
     push %ecx
     push %ebx
     push %eax
-
+	
+	
+	
     // Kernel-Datensegmente laden
     mov $0x10, %ax
     mov %ax, %ds
     mov %ax, %es
- 
+    
     // Handler aufrufen
     // Der Rueckgabewert ist der Prozessorzustand des moeglicherweise
     // gewechselten Tasks. Wir muessen also den Stack dorthin wechseln
@@ -96,6 +97,4 @@ intr_common_handler:
 
     // Fehlercode und Interruptnummer vom Stack nehmen
     add $8, %esp
-
     iret
-

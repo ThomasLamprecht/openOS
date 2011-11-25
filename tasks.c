@@ -1,68 +1,61 @@
 #include "console.h"
 #include "intr.h"
+#include "mm.h"
 
+struct task {
+    struct cpu_state*   cpu_state;
+    struct task*        next;
+};
+ 
+static struct task* first_task = NULL;
+static struct task* current_task = NULL;
 
 void idle()
 {
-	asm volatile("jmp .");
+	while(1){/*Waiting so hard*/}
 }
 static void task_a(void)
 {
-	int i;
-    for(i=0;i<200;i++)
+    uint64_t j;
+    while(1)
     {
         kprintf("A");
+        for(j=0;j<20000;j++)
+    		continue;
     }
-    idle();
 }
 
 static void task_b(void)
 {
-	int i;
-    for(i=0;i<200;i++)
+    uint64_t j;
+    while(1)
     {
         kprintf("B");
+        for(j=0;j<200000;j++)
+    		continue;
     }
-    idle();
 }
 
 static void task_c(void)
 {
-	int i;
-	asm volatile("cli");
-    for(i=0;i<200;i++)
+    uint64_t j;
+    while(1)
     {
         kprintf("C");
+        for(j=0;j<200000;j++)
+    		continue;
     }
-    idle();
 }
 
-static void task_d(void)
-{
-	int i;
-    for(i=0;i<200;i++)
-    {
-        kprintf("D");
-    }
-    idle();
-}
-
-static uint8_t stack_a[4096];
-static uint8_t stack_b[4096];
-static uint8_t stack_c[4096];
-static uint8_t stack_d[4096];
-
-static uint8_t user_stack_a[4096];
-static uint8_t user_stack_b[4096];
-static uint8_t user_stack_c[4096];
-static uint8_t user_stack_d[4096];
 /*
  * Jeder Task braucht seinen eigenen Stack, auf dem er beliebig arbeiten kann,
  * ohne dass ihm andere Tasks Dinge ueberschreiben. Ausserdem braucht ein Task
  * einen Einsprungspunkt.
  */
-struct cpu_state* init_task(uint8_t* stack, uint8_t* user_stack, void* entry)
+struct task* init_task(void* entry)
 {
+	uint8_t* stack = pmm_alloc();
+	uint8_t* user_stack = pmm_alloc();
     /*
      * CPU-Zustand fuer den neuen Task festlegen
      */
@@ -74,7 +67,7 @@ struct cpu_state* init_task(uint8_t* stack, uint8_t* user_stack, void* entry)
         .esi = 0,
         .edi = 0,
         .ebp = 0,
-        .esp = (uint32_t) user_stack, // doing user task yeah :)
+        .esp = (uint32_t) user_stack + 4096, // doing user task: yeah :)
         .eip = (uint32_t) entry,
 
         /* Ring-0-Segmentregister */
@@ -93,20 +86,20 @@ struct cpu_state* init_task(uint8_t* stack, uint8_t* user_stack, void* entry)
      */
     struct cpu_state* state = (void*) (stack + 4096 - sizeof(new_state));
     *state = new_state;
-
-    return state;
+    
+    struct task* task = pmm_alloc();
+    task->cpu_state = state;
+    task->next = first_task;
+    first_task = task;
+    return task;
 }
-
-static int current_task = -1;
-static int num_tasks = 4;
-static struct cpu_state* task_states[4];
 
 void init_multitasking(void)
 {
-    task_states[0] = init_task(stack_a, user_stack_a, task_a);
-    task_states[1] = init_task(stack_b, user_stack_b, task_b);
-	task_states[2] = init_task(stack_c, user_stack_c, task_c);
-    task_states[3] = init_task(stack_d, user_stack_d, task_d);
+    init_task(task_a);
+    init_task(task_b);
+	init_task(task_c);
+	//task_states[4] = init_task(stack_c, user_stack_c, task_c);
 }
 
 /*
@@ -121,19 +114,28 @@ struct cpu_state* schedule(struct cpu_state* cpu)
      * gerade zum ersten Mal in einen Task. Diesen Prozessorzustand brauchen
      * wir spaeter nicht wieder.
      */
-    if (current_task >= 0)
+    if (current_task != NULL)
     {
-        task_states[current_task] = cpu;
+        current_task->cpu_state = cpu;
     }
-
+    
     /*
      * Naechsten Task auswaehlen. Wenn alle durch sind, geht es von vorne los
      */
-    current_task++;
-    current_task %= num_tasks;
+	if (current_task == NULL)
+	{
+        current_task = first_task;
+    }
+    else
+    {
+        current_task = current_task->next;
+        if (current_task == NULL)
+        {
+            current_task = first_task;
+        }
+    }
 
     /* Prozessorzustand des neuen Tasks aktivieren */
-    cpu = task_states[current_task];
-
+    cpu = current_task->cpu_state;
     return cpu;
 }

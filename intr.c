@@ -208,29 +208,53 @@ void init_intr(void)
     asm volatile("sti"); // enable interrupts
 }
 
+void test()
+{
+	kprintf("Test!\n");
+}
+
 struct cpu_state* handle_interrupt(struct cpu_state* cpu)
  {
     struct cpu_state* new_cpu = cpu;
     if (cpu->intr <= 0x1f)
     {
-		kprintf("\nException %d, Kernel angehalten!\n", cpu->intr);
-		kprintf("eax: %x\n"
-		"ebx: %x\n"
-		"ecx: %x\n"
-		"edx: %x\n"
-		"esi: %x\n"
-		"edi: %x\n"
-		"ebp: %x\n"
-		"eip: %x\n"
-		"cs : %x\n"
-		"eflags: %x\n"
-		"esp: %x\n"
-		"ss : %x\n",cpu->eax,cpu->ebx,cpu->ecx,cpu->edx,cpu->esi,cpu->edi,cpu->ebp,cpu->eip,cpu->cs,cpu->eflags,cpu->esp,cpu->ss);        
+    	const char *emesg[] = 
+    	{
+			"'Divide by zero' occurred",
+			"'Single step' occurred, debugging pls",
+			"'Non maskable' occurred",
+			"'Breakpoint Exception' occurred",
+			"'Overflow Exception' occured",
+			"BOUND range exceeded",
+			"Invalid opcode",
+			"Coprocessor not available", // we'll emulate it, but I don't think that thus exception occurs nowadays
+			"'Double fault' occurred",
+			"Coprocessor segment overrun",
+			"Invalid task state segment",
+			"Segment not present",
+			"Stack exception",
+			"General protection exception",
+			"Page fault", // Shouldn't occur 'til we've implemented paging ;)
+			"Reserved o.O",
+			"Coprocessor error"
+    	};
+		kprintf("\nE %d, Panic: \"%s\" eno: %x\n", cpu->intr, emesg[cpu->intr],cpu->error);
+		kprintf("eax: 0x%x;\t"
+		"ebx: 0x%x;\n"
+		"ecx: 0x%x;\t"
+		"edx: 0x%x;\n"
+		"esi: 0x%x;\t"
+		"edi: 0x%x;\n"
+		"ebp: 0x%x;\t"
+		"eip: 0x%x;\n"
+		"cs : 0x%x;\t"
+		"eflags: 0x%x;\n"
+		"esp: 0x%x;\t"
+		"ss : 0x%x\n",cpu->eax,cpu->ebx,cpu->ecx,cpu->edx,cpu->esi,cpu->edi,cpu->ebp,cpu->eip,cpu->cs,cpu->eflags,cpu->esp,cpu->ss);        
 
         while(1)
         {
-            // Prozessor anhalten
-            asm volatile("cli; hlt");
+            asm volatile("cli; hlt"); // Prozessor anhalten
         }
     }
     else if (cpu->intr >= 0x20 && cpu->intr <= 0x2f)
@@ -252,9 +276,8 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
     {
         kprintf("Unbekannter Interrupt \"%d\"\n",cpu->intr);
         while(1)
-        {
-            // Prozessor anhalten
-            asm volatile("cli; hlt");
+        {            
+            asm volatile("cli; hlt"); // Prozessor anhalten
         }
     }
     return new_cpu;
