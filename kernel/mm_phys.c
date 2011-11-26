@@ -31,13 +31,16 @@ void pmm_init(struct multiboot_info* mb_info)
      * Nur, was die BIOS-Memory-Map als frei bezeichnet, wird wieder als frei
      * markiert
      */
-    while (mmap < mmap_end) {
-        if (mmap->type == 1) {
+    while (mmap < mmap_end)
+	{
+        if (mmap->type == 1)
+		{
             /* Der Speicherbereich ist frei, entsprechend markieren */
             uintptr_t addr = mmap->base;
             uintptr_t end_addr = addr + mmap->length;
 
-            while (addr < end_addr) {
+            while (addr < end_addr)
+			{
                 pmm_free((void*) addr);
                 addr += 0x1000;
             }
@@ -47,10 +50,32 @@ void pmm_init(struct multiboot_info* mb_info)
 
     /* Den Kernel wieder als belegt kennzeichnen */
     uintptr_t addr = (uintptr_t) &kernel_start;
-    while (addr < (uintptr_t) &kernel_end) {
+    while (addr < (uintptr_t) &kernel_end)
+	{
         pmm_mark_used((void*) addr);
         addr += 0x1000;
     }
+
+    /*
+	** Die Multibootstruktur auch, genauso wie die Liste von Multibootmodulen.
+	* Wir gehen bei beiden davon aus, dass sie maximal 4k gross werden
+	*/
+	     struct multiboot_module* modules = mb_info->mbs_mods_addr;
+
+	     pmm_mark_used(mb_info);
+	     pmm_mark_used(modules);
+
+	     /* Und die Multibootmodule selber sind auch belegt */
+	     int i;
+	     for (i = 0; i < mb_info->mbs_mods_count; i++)
+		 {
+			addr = modules[i].mod_start;
+			while (addr < modules[i].mod_end)
+			{
+				pmm_mark_used((void*) addr);
+				addr += 0x1000;
+			}
+		}
 }
 
 void* pmm_alloc(void)

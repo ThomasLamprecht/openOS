@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-struct multiboot_info {
+struct multiboot_info
+{
     uint32_t    mbs_flags;
     uint32_t    mbs_mem_lower;
     uint32_t    mbs_mem_upper;
@@ -16,11 +17,20 @@ struct multiboot_info {
     void*       mbs_mmap_addr;
 } __attribute__((packed));
 
-struct multiboot_mmap {
+struct multiboot_mmap
+{
     uint32_t    entry_size;
     uint64_t    base;
     uint64_t    length;
     uint32_t    type;
+} __attribute__((packed));
+
+struct multiboot_module
+{
+	uint32_t    mod_start;
+	uint32_t    mod_end;
+	char*       cmdline;
+	uint32_t    reserved;
 } __attribute__((packed));
 
 #endif

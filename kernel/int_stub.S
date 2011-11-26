@@ -13,7 +13,7 @@ intr_stub_\nr:
     jmp intr_common_handler
 .endm
 
-// Exceptions
+/* Exceptions */
 intr_stub 0
 intr_stub 1
 intr_stub 2
@@ -34,7 +34,7 @@ intr_stub 16
 intr_stub_error_code 17
 intr_stub 18
 
-// IRQs
+/* IRQs */
 intr_stub 32
 intr_stub 33
 intr_stub 34
@@ -52,12 +52,12 @@ intr_stub 45
 intr_stub 46
 intr_stub 47
 
-// Syscall
+/* Syscall */
 intr_stub 48
 
 .extern handle_interrupt
 intr_common_handler:
-    // CPU-Zustand sichern
+    /* Save cpu-state */
     push %ebp
     push %edi
     push %esi
@@ -65,28 +65,29 @@ intr_common_handler:
     push %ecx
     push %ebx
     push %eax
-	
-	
-	
-    // Kernel-Datensegmente laden
+
+
+
+    /* load kernel segment, so we're sure that we're in ring 0 */
     mov $0x10, %ax
     mov %ax, %ds
     mov %ax, %es
-    
-    // Handler aufrufen
-    // Der Rueckgabewert ist der Prozessorzustand des moeglicherweise
-    // gewechselten Tasks. Wir muessen also den Stack dorthin wechseln
-    // um die Register wiederherzustellen.
+
+    /* Execute second level handler
+    / return value is probably the next task
+    / so let's move the stack pointer there
+	/ 'cause there waits our new cpu state
+    */
     push %esp
     call handle_interrupt
     mov %eax, %esp
- 
-    // User-Datensegmente laden
+
+    /* interrupt handled, let's move on with our user tasks */
     mov $0x23, %ax
     mov %ax, %ds
     mov %ax, %es
 
-    // CPU-Zustand wiederherstellen
+    /* restore cpu stat (whichever) */
     pop %eax
     pop %ebx
     pop %ecx
@@ -95,6 +96,6 @@ intr_common_handler:
     pop %edi
     pop %ebp
 
-    // Fehlercode und Interruptnummer vom Stack nehmen
+    /* pop error code and interrupt number */
     add $8, %esp
     iret

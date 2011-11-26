@@ -1,7 +1,7 @@
 #include <stdarg.h>
 #include "console.h"
 
-static int x = 0;
+static int x = 0; // actual x and y cursor position
 static int y = 0;
 
 static char* video = (char*) 0xb8000; // start of the console memory
@@ -15,7 +15,7 @@ static void kputc(char c) // When porting on a other console this and the define
 		x = 0;
 		y++;
 	}
-	
+
 	if (c == '\n')
 	{
 		return;

@@ -239,7 +239,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
     struct cpu_state* new_cpu = cpu;
     if (cpu->intr <= 0x1f)
     {
-    	const char *emesg[] = 
+    	const char *emesg[] =
     	{
 			"'Divide by zero' occurred",
 			"'Single step' occurred, debugging pls",
@@ -271,7 +271,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 		"cs : 0x%x;\t"
 		"eflags: 0x%x;\n"
 		"esp: 0x%x;\t"
-		"ss : 0x%x\n",cpu->eax,cpu->ebx,cpu->ecx,cpu->edx,cpu->esi,cpu->edi,cpu->ebp,cpu->eip,cpu->cs,cpu->eflags,cpu->esp,cpu->ss);        
+		"ss : 0x%x\n",cpu->eax,cpu->ebx,cpu->ecx,cpu->edx,cpu->esi,cpu->edi,cpu->ebp,cpu->eip,cpu->cs,cpu->eflags,cpu->esp,cpu->ss);
 
         while(1)
         {
@@ -293,11 +293,15 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
         // EOI an Master-PIC
         outb(0x20, 0x20);
     }
+	else if (cpu->intr == 0x30)
+	{
+		new_cpu = syscall(cpu);
+	}
     else
     {
         kprintf("Unbekannter Interrupt \"%d\"\n",cpu->intr);
         while(1)
-        {            
+        {
             asm volatile("cli; hlt"); // Prozessor anhalten
         }
     }

@@ -1,52 +1,55 @@
+#include <stddef.h>
+#include <string.h>
+
 #include "console.h"
 #include "intr.h"
 #include "mm.h"
+#include "multiboot.h"
 
 struct task {
     struct cpu_state*   cpu_state;
     struct task*        next;
 };
- 
+
 static struct task* first_task = NULL;
 static struct task* current_task = NULL;
 
 void idle()
 {
+	asm volatile("int $0x20"); // Should now be faster wenn idle;
 	while(1){/*Waiting so hard*/}
 }
 static void task_a(void)
 {
     uint64_t j;
-    
-    cmos_write(0x0b,0x04);
-    while(1)
-    {
-        kprintf("A");
-        for(j=0;j<20000;j++)
-    		continue;
-    }
+
+	kprintf("Task A started\n");
+	for(j=0;j<200000000;j++)
+		continue;
+	kprintf("Task A stopped\n");
+	idle();
 }
 
 static void task_b(void)
 {
     uint64_t j;
-    while(1)
-    {
-        kprintf("B");
-        for(j=0;j<200000;j++)
-    		continue;
-    }
+
+	kprintf("Task B started\n");
+	for(j=0;j<20000000;j++)
+		continue;
+	kprintf("Task B stopped\n");
+	idle();
 }
 
 static void task_c(void)
 {
     uint64_t j;
-    while(1)
-    {
-        kprintf("C");
-        for(j=0;j<200000;j++)
-    		continue;
-    }
+
+	kprintf("Task C started\n");
+	for(j=0;j<200000;j++)
+		continue;
+	kprintf("Task C stopped\n");
+	idle();
 }
 
 /*
@@ -61,7 +64,8 @@ struct task* init_task(void* entry)
     /*
      * CPU-Zustand fuer den neuen Task festlegen
      */
-    struct cpu_state new_state = {
+    struct cpu_state new_state =
+    {
         .eax = 0,
         .ebx = 0,
         .ecx = 0,
@@ -88,7 +92,7 @@ struct task* init_task(void* entry)
      */
     struct cpu_state* state = (void*) (stack + 4096 - sizeof(new_state));
     *state = new_state;
-    
+
     struct task* task = pmm_alloc();
     task->cpu_state = state;
     task->next = first_task;
@@ -96,11 +100,31 @@ struct task* init_task(void* entry)
     return task;
 }
 
-void init_multitasking(void)
+void init_multitasking(struct multiboot_info* multiboot_nfo)
 {
-    init_task(task_a);
-    init_task(task_b);
-	init_task(task_c);
+	if (multiboot_nfo->mbs_mods_count == 0)
+	{
+		        /*
+		         * Ohne Module machen wir dasselbe wie bisher auch. Eine genauso gute
+		         * Alternative waere es, einfach mit einer Fehlermeldung abzubrechen.
+		         */
+		         init_task(task_c);
+		         init_task(task_b);
+		         init_task(task_a);
+	}
+	else
+	{
+		/*
+		* Wenn wir mindestens ein Multiboot-Modul haben, kopieren wir das
+		* erste davon nach 2 MB und erstellen dann einen neuen Task dafuer.
+		*/
+		struct multiboot_module* modules = multiboot_nfo->mbs_mods_addr;
+		size_t length = modules[0].mod_end - modules[0].mod_start;
+		void* load_addr = (void*) 0x200000;
+
+		memcpy(load_addr, (void*) modules[0].mod_start, length);
+		init_task(load_addr);
+	}
 	//task_states[4] = init_task(stack_c, user_stack_c, task_c);
 }
 
@@ -120,7 +144,11 @@ struct cpu_state* schedule(struct cpu_state* cpu)
     {
         current_task->cpu_state = cpu;
     }
-    
+    else if(first_task==NULL)
+	{
+		kprintf("\n------------------\nNo Tasks there\n\nHalting cpu\n");
+		asm volatile("cli; hlt");
+	}
     /*
      * Naechsten Task auswaehlen. Wenn alle durch sind, geht es von vorne los
      */
