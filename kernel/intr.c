@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "intr.h"
 #include "console.h"
+
 // Exceptions
 extern void intr_stub_0(void);
 extern void intr_stub_1(void);
@@ -21,6 +22,7 @@ extern void intr_stub_15(void);
 extern void intr_stub_16(void);
 extern void intr_stub_17(void);
 extern void intr_stub_18(void);
+
 // IRQ's
 extern void intr_stub_32(void);
 extern void intr_stub_33(void);
@@ -38,6 +40,7 @@ extern void intr_stub_44(void);
 extern void intr_stub_45(void);
 extern void intr_stub_46(void);
 extern void intr_stub_47(void);
+
 // Syscalls (software int's)
 extern void intr_stub_48(void);
 
@@ -82,7 +85,7 @@ void init_gdt(void)
         .pointer = gdt,
     };
 
-    // GDT-Eintraege aufbauen
+    // build GDT-entries
     gdt_set_entry(0, 0, 0, 0);
     gdt_set_entry(1, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT | GDT_FLAG_CODESEG | GDT_FLAG_4K | GDT_FLAG_PRESENT);
     gdt_set_entry(2, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT | GDT_FLAG_DATASEG | GDT_FLAG_4K | GDT_FLAG_PRESENT);
@@ -90,11 +93,10 @@ void init_gdt(void)
     gdt_set_entry(4, 0, 0xfffff, GDT_FLAG_SEGMENT | GDT_FLAG_32_BIT | GDT_FLAG_DATASEG | GDT_FLAG_4K | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
     gdt_set_entry(5, (uint32_t)tss, sizeof(tss), GDT_FLAG_TSS | GDT_FLAG_PRESENT | GDT_FLAG_RING3);
 
-    // GDT neu laden
+    // reload GDT
     asm volatile("lgdt %0" : : "m" (gdtp));
 
-    // Segmentregister neu laden, damit die neuen GDT-Eintraege auch wirklich
-    // benutzt werden
+    // reload segment-registers, so GDT-entries will be used
     asm volatile(
         "mov $0x10, %ax;"
         "mov %ax, %ds;"
@@ -121,13 +123,13 @@ static void idt_set_entry(int i, void (*fn)(), unsigned int selector, int flags)
     idt[i] |= ((handler>> 16) & 0xffffLL) << 48;
 }
 
-/* Schreibt ein Byte in einen I/O-Port */
+/* writes a byte on an I/O-Port */ // TODO move
 static inline void outb(uint16_t port, uint8_t data)
 {
     asm volatile ("outb %0, %1" : : "a" (data), "Nd" (port));
 }
 
-/* Schreibt ein Byte in einen I/O-Port */
+/* gets a byte from an I/O-Port */
 static inline uint8_t inb(uint16_t port)
 {
 	uint8_t result=0;
@@ -135,7 +137,7 @@ static inline uint8_t inb(uint16_t port)
     return result;
 }
 
-// TODO tidy up
+// TODO tidy up -> move
 uint8_t cmos_read(uint8_t offset)
 {
   uint8_t tmp = inb(0x70);
@@ -150,19 +152,19 @@ void cmos_write(uint8_t offset,uint8_t val) {
 
 static void init_pic(void)
 {
-    // Master-PIC initialisieren
-    outb(0x20, 0x11); // Initialisierungsbefehl fuer den PIC
-    outb(0x21, 0x20); // Interruptnummer fuer IRQ 0
-    outb(0x21, 0x04); // An IRQ 2 haengt der Slave
+    // initialize master-PIC
+    outb(0x20, 0x11); // Initialize-command for the PIC
+    outb(0x21, 0x20); // Interrupt number for IRQ 0
+    outb(0x21, 0x04); // On IRQ 2 hangs the slave
     outb(0x21, 0x01); // ICW 4
 
-    // Slave-PIC initialisieren
-    outb(0xa0, 0x11); // Initialisierungsbefehl fuer den PIC
-    outb(0xa1, 0x28); // Interruptnummer fuer IRQ 8
-    outb(0xa1, 0x02); // An IRQ 2 haengt der Slave
+	// initialize slave-PIC
+	outb(0xa0, 0x11); // Initialize-command for the PIC
+	outb(0xa1, 0x28); // Interrupt number for IRQ 8
+	outb(0xa1, 0x02); // On IRQ 2 hangs the Slave
     outb(0xa1, 0x01); // ICW 4
 
-    // Alle IRQs aktivieren (demaskieren)
+    // activate all IRQs (demasking them)
     outb(0x20, 0x0);
     outb(0xa0, 0x0);
 }
@@ -179,10 +181,10 @@ void init_intr(void)
         .pointer = idt,
     };
 
-    // Interruptnummern der IRQs umbiegen
+	// redirect interrupt numbers of the IRQs
     init_pic();
 
-    // Excpetion-Handler
+    // Excpetion-handler
     idt_set_entry(0, intr_stub_0, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
     idt_set_entry(1, intr_stub_1, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
     idt_set_entry(2, intr_stub_2, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
@@ -203,7 +205,7 @@ void init_intr(void)
     idt_set_entry(17, intr_stub_17, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
     idt_set_entry(18, intr_stub_18, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
 
-    // IRQ-Handler
+    // IRQ-handler
     idt_set_entry(32, intr_stub_32, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
     idt_set_entry(33, intr_stub_33, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
     idt_set_entry(34, intr_stub_34, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING0 | IDT_FLAG_PRESENT);
@@ -224,14 +226,9 @@ void init_intr(void)
     // Syscall
     idt_set_entry(48, intr_stub_48, 0x8, IDT_FLAG_INTERRUPT_GATE | IDT_FLAG_RING3 | IDT_FLAG_PRESENT);
 
-    asm volatile("lidt %0" : : "m" (idtp));
+    asm volatile("lidt %0" : : "m" (idtp)); // reload idt
 
     asm volatile("sti"); // enable interrupts
-}
-
-void test()
-{
-	kprintf("Test!\n");
 }
 
 struct cpu_state* handle_interrupt(struct cpu_state* cpu)
@@ -248,7 +245,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 			"'Overflow Exception' occured",
 			"BOUND range exceeded",
 			"Invalid opcode",
-			"Coprocessor not available", // we'll emulate it, but I don't think that thus exception occurs nowadays
+			"Coprocessor not available", // we should emulate it, but I don't think that thus exception occurs nowadays
 			"'Double fault' occurred",
 			"Coprocessor segment overrun",
 			"Invalid task state segment",
@@ -275,7 +272,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 
         while(1)
         {
-            asm volatile("cli; hlt"); // Prozessor anhalten
+            asm volatile("cli; hlt"); // stopping cpu, we should kill the guilty task and go one
         }
     }
     else if (cpu->intr >= 0x20 && cpu->intr <= 0x2f)
@@ -287,10 +284,10 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 		}
         if (cpu->intr >= 0x28)
         {
-            // EOI an Slave-PIC
+            // End Of Interrupt to slave-PIC
             outb(0xa0, 0x20);
         }
-        // EOI an Master-PIC
+        // EOI to master-PIC
         outb(0x20, 0x20);
     }
 	else if (cpu->intr == 0x30)
@@ -299,7 +296,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 	}
     else
     {
-        kprintf("Unbekannter Interrupt \"%d\"\n",cpu->intr);
+        kprintf("Unknown interrupt \"%d\"\n",cpu->intr);
         while(1)
         {
             asm volatile("cli; hlt"); // Prozessor anhalten

@@ -8,7 +8,7 @@ static char* video = (char*) 0xb8000; // start of the console memory
 
 static int kprintf_res = 0;
 
-static void kputc(char c) // When porting on a other console this and the defines must be adapted
+static void kputc(char c) // When porting on a tty this and the defines must be adapted
 {
 	if ((c == '\n') || (x >= XSIZE))
 	{
@@ -112,6 +112,10 @@ int kprintf(const char* fmt, ...)
 					n = va_arg(ap, unsigned long int);
 					kputn(n, 16);
 					break;
+				case 'c':
+					n = va_arg(ap, int);
+					kputc(n);
+					break;
 				case '%':
 					kputc('%');
 					break;
@@ -125,10 +129,10 @@ int kprintf(const char* fmt, ...)
 		}
 		else
 		{
-			if(*fmt=='\t') // TODO find adaequat solution... (maybe looking how linus made this in 0.01)
+			if(*fmt=='\t') // TODO find adaequat solution... (maybe looking how linus did this in 0.01)
 			{
 				int i;
-				for(i=0;i<TABSIZE;i++)
+				for(i=x%TABSIZE;i<TABSIZE;i++)
 					kputc('\0');
 			}
 			else

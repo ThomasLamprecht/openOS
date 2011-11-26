@@ -2,37 +2,37 @@
 #define MB_MAGIC 0x1badb002
 #define MB_FLAGS 0x0
 #define MB_CHECKSUM -(MB_MAGIC + MB_FLAGS)
- 
-// Der Multiboot-Header
+
+/* the multiboot-header */
 .align 4
 .int    MB_MAGIC
 .int    MB_FLAGS
 .int    MB_CHECKSUM
- 
+
 .section .text
 
-// Init ist eine Funktion aus init.c
+/* Init is placed in init.c */
 .extern init
 
-// _start muss global sein, damit der Linker es findet und als Einsprungspunkt
-// benutzen kann (alle Labels, die nicht global sind, sind nur in dieser Datei
-// sichtbar)
+/*
+* _start must be global,so the Linker could find it
+* It will be our entry point
+*/
 .global _start
 _start:
-    // Stack initialisieren
+    /* Init stack */
     mov $kernel_stack, %esp
- 
-    // C-Code aufrufen
+
+    /* call c-function */
 	push %ebx
     call init
- 
 
- 
-    // Endless ... :)
+
+
+    /* Endless ... :)*/
     jmp .
- 
-// 8 kB Stack fuer den Kernel. Das Label steht hinter dem freien Speicher,
-// weil der Stack nach unten waechst
+
+/* 8 kB Stack for the kernel. Remember Stacks grows downwards */
 .section .bss
 .space 8192
 kernel_stack:

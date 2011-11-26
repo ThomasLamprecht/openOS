@@ -1,23 +1,21 @@
-/*  Bei _start soll die Ausfuehrung losgehen */
+/*  starting execution on label _start */
 ENTRY(_start)
 
 /*
- * Hier wird festgelegt, in welcher Reihenfolge welche Sektionen in die Binary
- * geschrieben werden sollen
+ * Defines in which order the sections will be written in the binary
  */
 SECTIONS
 {
     /*
-     * . ist die aktuelle Position in der Datei. Wir wollen den Kernel wie gehabt
-     * an 1 MB laden, also muessen wir dort die erste Sektion hinlegen
+     * . describes the actual position in the File. I will load the kernel on 1 MB so there will be our first section
      */
     . = 0x100000;
-    
-	/* Symbol fuer den Kernelanfang definieren */
+
+	/* define a symbol for kernel start (needed for PMM)) */
     kernel_start = .;
     /*
-     * Der Multiboot-Header muss zuerst kommen (in den ersten 8 kB).
-     * Die Standardsektionen einfach hintereinander weg einbinden.
+     * The multiboot-header must be in the first 8kB so lets define him as first section
+	 * after him the standar sections comes
      */
     .text : {
         *(multiboot)
@@ -32,7 +30,7 @@ SECTIONS
     .bss ALIGN(4096) : {
         *(.bss)
     }
-    /* Symbole fuer das Kernelende definieren (auf 4k aufrunden) */
+    /* define a symbol for kernel end and lets ceils it to 4k */
     . = ALIGN(4096);
     kernel_end = .;
 }

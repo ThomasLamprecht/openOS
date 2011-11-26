@@ -4,11 +4,10 @@
 #include "multiboot.h"
 
 /*
- * Der Einfachheit halber deklarieren wir die maximal benoetige Bitmapgroesse
- * statisch (Wir brauchen 4 GB / 4 kB = 1M Bits; 1M Bits sind 1M/32 = 32k
- * Eintraege fuer das Array)
+ * to simplify the mm maping proccess we use a static size of 4Gb Ram
+ * -> 4 GB / 4 kB = 1M Bits; 1M Bits are 1M/32 = 32k Bitmap array entries
  *
- * Willkuerliche Festlegung: 1 = Speicher frei, 0 = Speicher belegt
+ * 1 = memory free, 0 = memory alloced
  */
 #define BITMAP_SIZE 32768
 static uint32_t bitmap[BITMAP_SIZE];
@@ -24,18 +23,17 @@ void pmm_init(struct multiboot_info* mb_info)
     struct multiboot_mmap* mmap_end = (void*)
         ((uintptr_t) mb_info->mbs_mmap_addr + mb_info->mbs_mmap_length);
 
-    /* Per Default ist erst einmal alles reserviert */
+    /* at begin all is reserved */
     memset(bitmap, 0, sizeof(bitmap));
 
     /*
-     * Nur, was die BIOS-Memory-Map als frei bezeichnet, wird wieder als frei
-     * markiert
+     * the BIOS-memory-map deklares free memory
      */
     while (mmap < mmap_end)
 	{
         if (mmap->type == 1)
 		{
-            /* Der Speicherbereich ist frei, entsprechend markieren */
+            /* it's free, so set the bit */
             uintptr_t addr = mmap->base;
             uintptr_t end_addr = addr + mmap->length;
 
@@ -48,7 +46,7 @@ void pmm_init(struct multiboot_info* mb_info)
         mmap++;
     }
 
-    /* Den Kernel wieder als belegt kennzeichnen */
+    /* IMPORTANT: mark kernel space as alloc'd */
     uintptr_t addr = (uintptr_t) &kernel_start;
     while (addr < (uintptr_t) &kernel_end)
 	{
@@ -57,15 +55,15 @@ void pmm_init(struct multiboot_info* mb_info)
     }
 
     /*
-	** Die Multibootstruktur auch, genauso wie die Liste von Multibootmodulen.
-	* Wir gehen bei beiden davon aus, dass sie maximal 4k gross werden
+	* lets mark the multiboot struct and the module list too.
+	* Let's say both stay under 4k TODO make real solutiion
 	*/
 	     struct multiboot_module* modules = mb_info->mbs_mods_addr;
 
 	     pmm_mark_used(mb_info);
 	     pmm_mark_used(modules);
 
-	     /* Und die Multibootmodule selber sind auch belegt */
+	     /* naturally the modules themself are used too */
 	     int i;
 	     for (i = 0; i < mb_info->mbs_mods_count; i++)
 		 {
@@ -83,16 +81,17 @@ void* pmm_alloc(void)
     int i, j;
 
     /*
-     * Zunaechst suchen wir komplette Eintraege ab. Wenn der Eintrag nicht null
-     * ist, ist mindestens ein Bit gesetzt, d.h. hier ist ein Stueck Speicher
-     * frei
+     * First we search in all entry, wenn a entry != 0 there is surely one piece of free memory
      */
     for (i = 0; i < BITMAP_SIZE; i++) {
-        if (bitmap[i] != 0) {
+        if (bitmap[i] != 0)
+		{
 
-            /* Jetzt muessen wir nur noch das gesetzte Bit finden */
-            for (j = 0; j < 32; j++) {
-                if (bitmap[i] & (1 << j)) {
+            /* so lets find the free bit (the set bit)) */
+            for (j = 0; j < 32; j++)
+			{
+                if (bitmap[i] & (1 << j))
+				{
                     bitmap[i] &= ~(1 << j);
                     return (void*)( (i * 32 + j) * 4096);
                 }
@@ -100,7 +99,7 @@ void* pmm_alloc(void)
         }
     }
 
-    /* Scheint wohl nichts frei zu sein... */
+    /* no memory free */
     return NULL;
 }
 

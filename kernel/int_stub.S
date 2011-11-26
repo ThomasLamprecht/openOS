@@ -74,9 +74,9 @@ intr_common_handler:
     mov %ax, %es
 
     /* Execute second level handler
-    / return value is probably the next task
-    / so let's move the stack pointer there
-	/ 'cause there waits our new cpu state
+    * return value is probably the next task
+    * so let's move the stack pointer there
+	* 'cause there waits our new cpu state
     */
     push %esp
     call handle_interrupt
