@@ -17,6 +17,8 @@ void idle()
 static void task_a(void)
 {
     uint64_t j;
+    
+    cmos_write(0x0b,0x04);
     while(1)
     {
         kprintf("A");

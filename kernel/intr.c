@@ -127,6 +127,27 @@ static inline void outb(uint16_t port, uint8_t data)
     asm volatile ("outb %0, %1" : : "a" (data), "Nd" (port));
 }
 
+/* Schreibt ein Byte in einen I/O-Port */
+static inline uint8_t inb(uint16_t port)
+{
+	uint8_t result=0;
+    asm volatile ("inb %1, %0" : : "a" (result), "Nd" (port));
+    return result;
+}
+
+// TODO tidy up
+uint8_t cmos_read(uint8_t offset)
+{
+  uint8_t tmp = inb(0x70);
+  outb(0x70, (tmp & 0x80) | (offset & 0x7F));
+  return inb(0x71);
+}
+void cmos_write(uint8_t offset,uint8_t val) {
+  uint8_t tmp = inb(0x70);
+  outb(0x70, (tmp & 0x80) | (offset & 0x7F));
+  outb(0x71,val);
+}
+
 static void init_pic(void)
 {
     // Master-PIC initialisieren
