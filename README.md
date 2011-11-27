@@ -1,4 +1,4 @@
-Welcome to the openOS wiki! A Project from Thomas Lamprecht. It has been initiated as a research project for my mature exam I'm going to made next year on the "Gewerbe Oberschule Bruneck"
+This is a project from Thomas Lamprecht. It has been initiated as a research project for his mature exame. Which will be made at the "Gewerbe Oberschule Bruneck"
 
 # Releases
 
@@ -8,6 +8,7 @@ Code-names 'til yet:
 * Apple
 * Banana
 * Cranberry
+* Dragon Fruit
 
 # Build
 execute `make` in the kernel directory to build the kernel.
