@@ -11,7 +11,7 @@ inline uint8_t inb(uint16_t port)
 	asm volatile ("inb %1, %0" : : "a" (result), "Nd" (port));
 	return result;
 }
-/*
+
 inline void outb_p(uint16_t port, uint8_t data)
 {
 	__asm__ volatile ("outb %%al,%%dx\n"
@@ -19,4 +19,4 @@ inline void outb_p(uint16_t port, uint8_t data)
 	"1:\tjmp 1f\n"
 	"1:"::"a" (data),"d" (port));
 }
-inline uint8_t inb_p(uint16_t port);*/
+inline uint8_t inb_p(uint16_t port);

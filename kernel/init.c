@@ -16,5 +16,5 @@ void init(struct multiboot_info *multiboot_nfo)
 	init_intr();
 	init_multitasking(multiboot_nfo);
 
-	//asm volatile("int $0x20");
+	asm volatile("int $0x20"); // let's schedule
 }
