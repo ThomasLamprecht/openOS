@@ -1,6 +1,10 @@
 #include <stdarg.h>
 #include "console.h"
 
+/*
+ * A lot missing, maybe I'll port linus' version
+ */
+
 static int x = 0; // actual x and y cursor position
 static int y = 0;
 
@@ -99,32 +103,44 @@ int kprintf(const char* fmt, ...)
 			switch (*fmt)
 			{
 				case 's':
+				{
 					s = va_arg(ap, char*);
 					kputs(s);
 					break;
-				case 'd':
-				case 'u':
+				}
+				case 'd': case 'u':
+				{
 					n = va_arg(ap, unsigned long int);
 					kputn(n, 10);
 					break;
-				case 'x':
-				case 'p':
+				}
+				case 'x': case 'p':
+				{
 					n = va_arg(ap, unsigned long int);
 					kputn(n, 16);
 					break;
+				}
 				case 'c':
+				{
 					n = va_arg(ap, int);
 					kputc(n);
 					break;
+				}
 				case '%':
+				{
 					kputc('%');
 					break;
+				}
 				case '\0':
+				{
 					goto out;
-				default:
+				}
+				default:  // right now there's missing a lot of formating stuff, but the important things to hel debugging is there, so who care :)
+				{
 					kputc('%');
 					kputc(*fmt);
 					break;
+				}
 			}
 		}
 		else

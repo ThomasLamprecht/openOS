@@ -5,8 +5,10 @@
 #include "intr.h"
 #include "mm.h"
 #include "multiboot.h"
+#include "syscall.h"
 
-struct task {
+struct task // later we w(c)ould use the task struct of Linux
+{
     struct cpu_state*   cpu_state;
     struct task*        next;
 };
@@ -16,7 +18,7 @@ static struct task* current_task = NULL;
 
 void idle()
 {
-	asm volatile("int $0x20"); // Should now be faster wenn idle;
+	asm ("int $0x30"::"a"(SYSCALL_SCHEDULE)); // Should now be faster wenn idle;
 	while(1){/*Waiting so hard*/}
 }
 static void task_a(void)
@@ -24,8 +26,8 @@ static void task_a(void)
     uint64_t j;
 
 	kprintf("Task A started\n");
-	for(j=0;j<200000000;j++)
-		continue;
+	//for(j=0;j<200000000;j++)
+		kprintf("0x%x",j);//continue;
 	kprintf("Task A stopped\n");
 	idle();
 }
@@ -35,8 +37,8 @@ static void task_b(void)
     uint64_t j;
 
 	kprintf("Task B started\n");
-	for(j=0;j<20000000;j++)
-		continue;
+	//for(j=0;j<20000000;j++)
+	//	continue;
 	kprintf("Task B stopped\n");
 	idle();
 }
@@ -60,7 +62,7 @@ static void task_c(void)
 struct task* init_task(void* entry)
 {
 	uint8_t* stack = pmm_alloc();
-	uint8_t* user_stack = pmm_alloc();
+	uint8_t* user_stack = pmm_alloc(); // Tasks has 4 KB of stack....
     /*
      * CPU-Zustand fuer den neuen Task festlegen
      */
@@ -104,20 +106,16 @@ void init_multitasking(struct multiboot_info* multiboot_nfo)
 {
 	if (multiboot_nfo->mbs_mods_count == 0)
 	{
-		        /*
-		         * Ohne Module machen wir dasselbe wie bisher auch. Eine genauso gute
-		         * Alternative waere es, einfach mit einer Fehlermeldung abzubrechen.
-		         */
-		         init_task(task_c);
-		         init_task(task_b);
-		         init_task(task_a);
+		kprintf("No modules loaded. Starting test tasks\n");
+			init_task(task_c);
+			init_task(task_b);
+			init_task(task_a);
 	}
 	else
 	{
-		/*
-		* Wenn wir mindestens ein Multiboot-Modul haben, kopieren wir das
-		* erste davon nach 2 MB und erstellen dann einen neuen Task dafuer.
-		*/
+
+		kprintf("loading module 1 of %d\n",multiboot_nfo->mbs_mods_count);
+
 		struct multiboot_module* modules = multiboot_nfo->mbs_mods_addr;
 		size_t length = modules[0].mod_end - modules[0].mod_start;
 		void* load_addr = (void*) 0x200000;
@@ -146,7 +144,7 @@ struct cpu_state* schedule(struct cpu_state* cpu)
     }
     else if(first_task==NULL)
 	{
-		kprintf("\n------------------\nNo Tasks there\n\nHalting cpu\n");
+		kprintf("\n------------------\nNo Tasks there\n\nHalting cpu\n"); // Should going idle or something :) Best solution, ask user (needs keyboard drivers -.-)
 		asm volatile("cli; hlt");
 	}
     /*

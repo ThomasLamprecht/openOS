@@ -1,6 +1,8 @@
 #include <stdint.h>
+#include <asm/io.h>
 #include "intr.h"
 #include "console.h"
+#include "panic.h"
 
 // Exceptions
 extern void intr_stub_0(void);
@@ -123,33 +125,6 @@ static void idt_set_entry(int i, void (*fn)(), unsigned int selector, int flags)
     idt[i] |= ((handler>> 16) & 0xffffLL) << 48;
 }
 
-/* writes a byte on an I/O-Port */ // TODO move
-static inline void outb(uint16_t port, uint8_t data)
-{
-    asm volatile ("outb %0, %1" : : "a" (data), "Nd" (port));
-}
-
-/* gets a byte from an I/O-Port */
-static inline uint8_t inb(uint16_t port)
-{
-	uint8_t result=0;
-    asm volatile ("inb %1, %0" : : "a" (result), "Nd" (port));
-    return result;
-}
-
-// TODO tidy up -> move
-uint8_t cmos_read(uint8_t offset)
-{
-  uint8_t tmp = inb(0x70);
-  outb(0x70, (tmp & 0x80) | (offset & 0x7F));
-  return inb(0x71);
-}
-void cmos_write(uint8_t offset,uint8_t val) {
-  uint8_t tmp = inb(0x70);
-  outb(0x70, (tmp & 0x80) | (offset & 0x7F));
-  outb(0x71,val);
-}
-
 static void init_pic(void)
 {
     // initialize master-PIC
@@ -234,46 +209,10 @@ void init_intr(void)
 struct cpu_state* handle_interrupt(struct cpu_state* cpu)
  {
     struct cpu_state* new_cpu = cpu;
+
     if (cpu->intr <= 0x1f)
     {
-    	const char *emesg[] =
-    	{
-			"'Divide by zero' occurred",
-			"'Single step' occurred, debugging pls",
-			"'Non maskable' occurred",
-			"'Breakpoint Exception' occurred",
-			"'Overflow Exception' occured",
-			"BOUND range exceeded",
-			"Invalid opcode",
-			"Coprocessor not available", // we should emulate it, but I don't think that thus exception occurs nowadays
-			"'Double fault' occurred",
-			"Coprocessor segment overrun",
-			"Invalid task state segment",
-			"Segment not present",
-			"Stack exception",
-			"General protection exception",
-			"Page fault", // Shouldn't occur 'til we've implemented paging ;)
-			"Reserved o.O",
-			"Coprocessor error"
-    	};
-		kprintf("\nE %d, Panic: \"%s\" eno: %x\n", cpu->intr, emesg[cpu->intr],cpu->error);
-		kprintf("eax: 0x%x;\t"
-		"ebx: 0x%x;\n"
-		"ecx: 0x%x;\t"
-		"edx: 0x%x;\n"
-		"esi: 0x%x;\t"
-		"edi: 0x%x;\n"
-		"ebp: 0x%x;\t"
-		"eip: 0x%x;\n"
-		"cs : 0x%x;\t"
-		"eflags: 0x%x;\n"
-		"esp: 0x%x;\t"
-		"ss : 0x%x\n",cpu->eax,cpu->ebx,cpu->ecx,cpu->edx,cpu->esi,cpu->edi,cpu->ebp,cpu->eip,cpu->cs,cpu->eflags,cpu->esp,cpu->ss);
-
-        while(1)
-        {
-            asm volatile("cli; hlt"); // stopping cpu, we should kill the guilty task and go one
-        }
+    	panic(cpu);
     }
     else if (cpu->intr >= 0x20 && cpu->intr <= 0x2f)
     {
@@ -282,7 +221,11 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 			new_cpu = schedule(cpu);
 			tss[1] = (uint32_t) (new_cpu + 1);
 		}
-        if (cpu->intr >= 0x28)
+		else if(cpu->intr == 0x21)
+		{
+			kprintf("k");
+		}
+        else if (cpu->intr >= 0x28)
         {
             // End Of Interrupt to slave-PIC
             outb(0xa0, 0x20);
