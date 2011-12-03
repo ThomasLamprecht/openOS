@@ -160,6 +160,7 @@ void init_keyboard(void) // TODO MOVE!!
 	}
 
 	// Tastatur aktivieren
+	send_command(0xF5);
 	send_command(0xF4);
 }
 
@@ -246,7 +247,6 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 		else if(cpu->intr == 0x21)
 		{
 			uint8_t new_scan_code = inb(0x60);
-
 			kprintf("0x%x|",new_scan_code);
 		}
         else if (cpu->intr >= 0x28)
