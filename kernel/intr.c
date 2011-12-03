@@ -3,6 +3,7 @@
 #include "intr.h"
 #include "console.h"
 #include "panic.h"
+#include "keyboard.h"
 
 // Exceptions
 extern void intr_stub_0(void);
@@ -144,27 +145,6 @@ static void init_pic(void)
     outb(0xa0, 0x0);
 }
 
-/** Befehl an die Tastatur senden */
-static void send_command(uint8_t command) // TODO MOVE!!
-{
-	// Warten bis die Tastatur bereit ist, und der Befehlspuffer leer ist
-	while ((inb(0x64) & 0x2)) {}
-	outb(0x60, command);
-}
-void init_keyboard(void) // TODO MOVE!!
-{
-
-	// Tastaturpuffer leeren
-	while (inb(0x64) & 0x1) {
-		inb(0x60);
-	}
-
-	// Tastatur aktivieren
-	send_command(0xF5);
-	send_command(0xF4);
-}
-
-
 
 void init_intr(void)
 {
@@ -225,8 +205,6 @@ void init_intr(void)
     asm volatile("lidt %0" : : "m" (idtp)); // reload idt
 
     asm volatile("sti"); // enable interrupts
-
-	init_keyboard();
 }
 
 struct cpu_state* handle_interrupt(struct cpu_state* cpu)
@@ -246,8 +224,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 		}
 		else if(cpu->intr == 0x21)
 		{
-			uint8_t new_scan_code = inb(0x60);
-			kprintf("0x%x|",new_scan_code);
+			handle_keystroke();
 		}
         else if (cpu->intr >= 0x28)
         {
