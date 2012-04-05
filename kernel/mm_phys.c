@@ -56,7 +56,7 @@ void pmm_init(struct multiboot_info* mb_info)
 
     /*
 	* lets mark the multiboot struct and the module list too.
-	* Let's say both stay under 4k TODO make real solutiion
+	* Let's say both stay under 4k TODO make real solution
 	*/
 	     struct multiboot_module* modules = mb_info->mbs_mods_addr;
 

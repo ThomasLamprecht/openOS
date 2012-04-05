@@ -8,10 +8,10 @@
 void init(struct multiboot_info *multiboot_nfo)
 {
 	clrscr();
-	kprintf("Weclome to codename 'Dragon Fruit'!\n\nFirst timer interrupt will initiate the scheduler...\n");
+	kprintf("Weclome to codename 'Elderberry'! <3\n\nFirst timer interrupt will initiate the scheduler...\n");
 
 
-    pmm_init(multiboot_nfo); // Pagin comming soon :)
+    pmm_init(multiboot_nfo); // Paging comming soon :)
 
 	init_gdt();
 	init_intr();
@@ -20,5 +20,5 @@ void init(struct multiboot_info *multiboot_nfo)
 
 	init_multitasking(multiboot_nfo);
 
-	asm volatile("int $0x20"); // let's schedule
+	asm volatile("int $0x20"); // lets schedule
 }

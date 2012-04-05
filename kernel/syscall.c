@@ -11,7 +11,7 @@ struct cpu_state* syscall(struct cpu_state* cpu)
 		}
 		case SYSCALL_PRINTF: // kprintf
 		{
-			kprintf("");
+			kprintf("Test");
 			break;
 		}
 		case SYSCALL_SCHEDULE:

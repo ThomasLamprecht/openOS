@@ -10,11 +10,13 @@
 struct task // later we w(c)ould use the task struct of Linux
 {
     struct cpu_state*   cpu_state;
+	uint32_t pid;
     struct task*        next;
 };
 
 static struct task* first_task = NULL;
 static struct task* current_task = NULL;
+static uint32_t max_pid = 0;
 
 void idle()
 {
@@ -26,8 +28,8 @@ static void task_a(void)
     uint64_t j;
 
 	kprintf("Task A started\n");
-	//for(j=0;j<200000000;j++)
-		kprintf("0x%x",j);//continue;
+	for(j=0;j<200000;j++)
+		kprintf("A");//continue;
 	kprintf("Task A stopped\n");
 	idle();
 }
@@ -37,8 +39,8 @@ static void task_b(void)
     uint64_t j;
 
 	kprintf("Task B started\n");
-	//for(j=0;j<20000000;j++)
-	//	continue;
+	for(j=0;j<2000000;j++)
+		kprintf("B");//continue;
 	kprintf("Task B stopped\n");
 	idle();
 }
@@ -97,6 +99,7 @@ struct task* init_task(void* entry)
 
     struct task* task = pmm_alloc();
     task->cpu_state = state;
+	task->pid = ++max_pid;
     task->next = first_task;
     first_task = task;
     return task;

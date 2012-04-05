@@ -14,9 +14,17 @@ inline uint8_t inb(uint16_t port)
 
 inline void outb_p(uint16_t port, uint8_t data)
 {
-	__asm__ volatile ("outb %%al,%%dx\n"
+	__asm__ volatile ("outb %0,%1\n"
 	"\tjmp 1f\n"
 	"1:\tjmp 1f\n"
-	"1:"::"a" (data),"d" (port));
+	"1:"::"a" (data),"Nd" (port));
 }
-inline uint8_t inb_p(uint16_t port);
+inline uint8_t inb_p(uint16_t port)
+{
+	uint8_t result=0;
+		__asm__ volatile ("inb %1,%0\n"
+	"\tjmp 1f\n"
+	"1:\tjmp 1f\n"
+	"1:" : "=a" (result):"Nd" (port));
+	return result;
+}

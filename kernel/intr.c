@@ -222,7 +222,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 			new_cpu = schedule(cpu);
 			tss[1] = (uint32_t) (new_cpu + 1);
 		}
-		else if(cpu->intr == 0x21)
+		else if(cpu->intr == 0x21) // Keyboard interupt
 		{
 			handle_keystroke();
 		}
@@ -234,7 +234,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
         // EOI to master-PIC
         outb(0x20, 0x20);
     }
-	else if (cpu->intr == 0x30)
+	else if (cpu->intr == 0x30) // Got a Syscall here, so lets call him :)
 	{
 		new_cpu = syscall(cpu);
 	}
