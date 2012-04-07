@@ -11,7 +11,7 @@ struct cpu_state* syscall(struct cpu_state* cpu)
 		}
 		case SYSCALL_PRINTF: // kprintf
 		{
-			kprintf("Test");
+			kprintf("%s",cpu->ebx);
 			break;
 		}
 		case SYSCALL_SCHEDULE:
@@ -19,6 +19,14 @@ struct cpu_state* syscall(struct cpu_state* cpu)
 			asm volatile("int $0x20");
 			break;
 		}
+		case SYSCALL_EXIT:
+		{
+			kprintf("__EXIT__ %d",cpu->ebx);
+			break;
+		}
+		default:
+			kprintf("Unknown Syscall! %d\n",cpu->eax);
+			break;
 	}
 
 	return cpu;

@@ -10,4 +10,5 @@
 
 void syscall(uint8_t call);
 
+void exit(int8_t status);
 #endif

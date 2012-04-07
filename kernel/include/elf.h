@@ -33,4 +33,6 @@ struct elf_program_header {
     uint32_t    alignment;
 } __attribute__((packed));
 
+void init_elf(void* image);
+
 #endif
