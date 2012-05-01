@@ -9,10 +9,15 @@ Code-names 'til yet:
 * Banana
 * Cranberry
 * Dragon Fruit
+* Elderberry
 
 # Build
 execute `make` in the kernel directory to build the kernel.
 
-The builded kernel, in elf format, could be executed in qemu like this:
+The builded kernel, in elf format, could be executed with qemu like this:
 
 `qemu -kernel kernel`
+
+With a userland programme:
+
+`qemu -kernel kernel -initrd ./user/test.bin`
