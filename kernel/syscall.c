@@ -14,7 +14,7 @@ struct cpu_state* syscall(struct cpu_state* cpu)
 			kprintf("%s",cpu->ebx);
 			break;
 		}
-		case SYSCALL_SCHEDULE:
+		case SYSCALL_YIELD:
 		{
 			asm volatile("int $0x20");
 			break;

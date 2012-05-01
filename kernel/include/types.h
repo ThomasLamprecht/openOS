@@ -25,4 +25,12 @@ struct cpu_state
 	uint32_t   ss;
 };
 
+struct task // later we w(c)ould use the task struct of Linux
+{
+    struct cpu_state*   cpu_state;
+	uint32_t 			pid;
+    struct task*        next;
+};
+
+
 #endif

@@ -6,13 +6,7 @@
 #include "mm.h"
 #include "multiboot.h"
 #include "syscall.h"
-
-struct task // later we w(c)ould use the task struct of Linux
-{
-    struct cpu_state*   cpu_state;
-	uint32_t pid;
-    struct task*        next;
-};
+#include "sys.h"
 
 static struct task* first_task = NULL;
 static struct task* current_task = NULL;
@@ -20,7 +14,7 @@ static uint32_t max_pid = 0;
 
 void idle()
 {
-	asm ("int $0x30"::"a"(SYSCALL_SCHEDULE)); // Should now be faster wenn idle;
+	asm ("int $0x30"::"a"(SYSCALL_YIELD)); // Should now be faster wenn idle;
 	while(1){/*Waiting so hard*/}
 }
 static void task_a(void)
@@ -127,6 +121,35 @@ void init_multitasking(struct multiboot_info* multiboot_nfo)
 		init_task(load_addr);
 	}
 	//task_states[4] = init_task(stack_c, user_stack_c, task_c);
+}
+
+
+uint32_t sys_getPid()
+{
+	return current_task->pid;
+}
+
+uint8_t deleteTask(uint32_t pid)
+{
+	struct task *actual,*prev=NULL;
+	for(actual = first_task; actual != NULL; actual = actual->next, prev = actual)
+	{
+		if(actual==NULL)
+			return NO_TASK;
+		if(actual->pid == pid)
+		{
+			if(prev==NULL||actual==first_task)
+					first_task = actual->next;
+			else
+				prev->next = actual->next;
+			//if(actual == current_task) should only be used for debugging, because it'll make the scheduler undeterminable
+			//{
+			//	asm volatile("int $0x20"); // lets schedule
+			//}
+			return TASK_DELETED;
+		}		
+	}
+	return NO_TASK;
 }
 
 /*

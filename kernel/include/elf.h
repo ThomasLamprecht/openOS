@@ -2,6 +2,9 @@
 #define ELF_H
 
 #include <stdint.h>
+#include "string.h"
+#include "console.h"
+
 
 #define ELF_MAGIC 0x464C457F
 
