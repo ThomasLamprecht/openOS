@@ -4,9 +4,11 @@
 #include <stdint.h>
 #include "string.h"
 #include "console.h"
-
+#include "sys.h"
 
 #define ELF_MAGIC 0x464C457F
+#define NO_ELF 0
+#define ELF_TASK_LOADED 1
 
 struct elf_header {
     uint32_t    magic;
@@ -36,6 +38,6 @@ struct elf_program_header {
     uint32_t    alignment;
 } __attribute__((packed));
 
-void init_elf(void* image);
+uint8_t init_elf(void* image);
 
 #endif

@@ -22,9 +22,10 @@ static void task_a(void)
     uint64_t j;
 
 	kprintf("Task A started\n");
-	for(j=0;j<200000;j++)
+	for(j=0;j<20;j++)
 		kprintf("A");//continue;
 	kprintf("Task A stopped\n");
+	asm ("int $0x30"::"a"(SYSCALL_EXIT), "b"(1));
 	idle();
 }
 
@@ -32,10 +33,12 @@ static void task_b(void)
 {
     uint64_t j;
 
-	kprintf("Task B started\n");
-	for(j=0;j<2000000;j++)
+	kprintf("Task B (%d) started\n",sys_getPid());
+	for(j=0;j<25;j++)
 		kprintf("B");//continue;
-	kprintf("Task B stopped\n");
+	kprintf("Task B (%d) stopped\n",sys_getPid());
+
+	asm ("int $0x30"::"a"(SYSCALL_EXIT), "b"(0));
 	idle();
 }
 
@@ -44,9 +47,10 @@ static void task_c(void)
     uint64_t j;
 
 	kprintf("Task C started\n");
-	for(j=0;j<200000;j++)
+	for(j=0;j<30;j++)
 		continue;
 	kprintf("Task C stopped\n");
+	asm ("int $0x30"::"a"(SYSCALL_EXIT), "b"(0));
 	idle();
 }
 
@@ -132,7 +136,7 @@ uint32_t sys_getPid()
 uint8_t deleteTask(uint32_t pid)
 {
 	struct task *actual,*prev=NULL;
-	for(actual = first_task; actual != NULL; actual = actual->next, prev = actual)
+	for(actual = first_task; actual != NULL; actual = actual->next)
 	{
 		if(actual==NULL)
 			return NO_TASK;
@@ -147,7 +151,8 @@ uint8_t deleteTask(uint32_t pid)
 			//	asm volatile("int $0x20"); // lets schedule
 			//}
 			return TASK_DELETED;
-		}		
+		}
+		prev = actual;
 	}
 	return NO_TASK;
 }

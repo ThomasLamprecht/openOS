@@ -21,7 +21,9 @@ struct cpu_state* syscall(struct cpu_state* cpu)
 		}
 		case SYSCALL_EXIT:
 		{
-			kprintf("__EXIT__ %d",cpu->ebx);
+			
+			if(deleteTask(sys_getPid())==TASK_DELETED)
+				kprintf("__EXIT__ (%d)-> %d",sys_getPid(),cpu->ebx);
 			break;
 		}
 		default:

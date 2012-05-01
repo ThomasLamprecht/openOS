@@ -1,6 +1,6 @@
 #include "include/elf.h"
 
-void init_elf(void* image)
+uint8_t init_elf(void* image)
 {
     /*
      * FIXME Wir muessen eigentlich die Laenge vom Image pruefen, damit wir bei
@@ -14,7 +14,7 @@ void init_elf(void* image)
     /* Ist es ueberhaupt eine ELF-Datei? */
     if (header->magic != ELF_MAGIC) {
         kprintf("Keine gueltige ELF-Magic!\n");
-        return;
+        return NO_ELF;
     }
 
     /*
@@ -39,4 +39,5 @@ void init_elf(void* image)
     }
 
     init_task((void*) header->entry);
+	return ELF_TASK_LOADED;
 }
