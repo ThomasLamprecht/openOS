@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stdint.h>
 #include "console.h"
 
 /*
@@ -6,25 +7,27 @@
  */
 
 static int x = 0; // actual x and y cursor position
-static int y = 0;
+static int y = OSBAR;
 
 static char* video = (char*) 0xb8000; // start of the console memory
 
 static int kprintf_res = 0;
 
-static void kputc(char c) // When porting on a tty this and the defines must be adapted
+static void kputccolor(char c, uint8_t color) // When porting on a tty this and the defines must be adapted
 {
 	if ((c == '\n') || (x >= XSIZE))
 	{
 		x = 0;
 		y++;
+		if(!(x >= XSIZE) || (c == '\n'))
+		{
+			return;
+		}
 	}
-
-	if (c == '\n')
-	{
-		return;
-	}
-
+//	if (c == '\n')
+//	{
+//		return;
+//	}
 	if (y >= YSIZE)
 	{
 		int i;
@@ -41,10 +44,15 @@ static void kputc(char c) // When porting on a tty this and the defines must be 
 	}
 
 	video[2 * (y * XSIZE + x)] = c;
-	video[2 * (y * XSIZE + x) + 1] = 0x07;
+	video[2 * (y * XSIZE + x) + 1] = color & 0x0F;
 
 	x++;
 	kprintf_res++;
+}
+
+static void kputc(char c)
+{
+	kputccolor(c, (uint8_t)0x07); // Using standart color...
 }
 
 static void kputs(const char* s)
@@ -84,7 +92,8 @@ void clrscr(void)
         video[i] = 0;
     }
 
-    x = y = 0;
+    x = 0;
+    y = OSBAR;
 }
 
 int kprintf(const char* fmt, ...)

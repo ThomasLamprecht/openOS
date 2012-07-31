@@ -4,6 +4,7 @@
 #define NO_TASK 0
 #define TASK_DELETED 1
 #define PERMISSON_DENIED 2
+#define TASK_ZERO_PERMISSION_DENIED 3
 
 uint32_t sys_getPid();
 uint8_t deleteTask(uint32_t pid);

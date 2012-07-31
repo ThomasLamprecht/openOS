@@ -1,4 +1,4 @@
-This is a project from Thomas Lamprecht. It has been initiated as a research project for his mature exame. Which will be made at the "Gewerbe Oberschule Bruneck"
+This is a project from Thomas Lamprecht. It has been initiated in December 2011 as a research project for his mature exame. Which will be made at the "Gewerbe Oberschule Bruneck" (Technical Highschool Bruneck)
 
 # Releases
 

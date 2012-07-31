@@ -7,12 +7,13 @@
 #include "multiboot.h"
 #include "syscall.h"
 #include "sys.h"
+#include "asm/io.h"
 
 static struct task* first_task = NULL;
 static struct task* current_task = NULL;
 static uint32_t max_pid = 0;
 
-void idle()
+static void idle(void)
 {
 	asm ("int $0x30"::"a"(SYSCALL_YIELD)); // Should now be faster wenn idle;
 	while(1){/*Waiting so hard*/}
@@ -22,7 +23,7 @@ static void task_a(void)
     uint64_t j;
 
 	kprintf("Task A started\n");
-	for(j=0;j<20;j++)
+	for(j=0;j<200;j++)
 		kprintf("A");//continue;
 	kprintf("Task A stopped\n");
 	asm ("int $0x30"::"a"(SYSCALL_EXIT), "b"(1));
@@ -34,7 +35,7 @@ static void task_b(void)
     uint64_t j;
 
 	kprintf("Task B (%d) started\n",sys_getPid());
-	for(j=0;j<25;j++)
+	for(j=0;j<250;j++)
 		kprintf("B");//continue;
 	kprintf("Task B (%d) stopped\n",sys_getPid());
 
@@ -44,12 +45,14 @@ static void task_b(void)
 
 static void task_c(void)
 {
-    uint64_t j;
-
-	kprintf("Task C started\n");
-	for(j=0;j<30;j++)
-		continue;
-	kprintf("Task C stopped\n");
+	int j;
+	while(1)
+	{
+		outb(0x70,0x00);
+		kprintf("%d\n",inb(0x71));
+		for(j=0;j<1000000;j++)
+			continue;
+	}
 	asm ("int $0x30"::"a"(SYSCALL_EXIT), "b"(0));
 	idle();
 }
@@ -97,7 +100,7 @@ struct task* init_task(void* entry)
 
     struct task* task = pmm_alloc();
     task->cpu_state = state;
-	task->pid = ++max_pid;
+	task->pid = max_pid++;
     task->next = first_task;
     first_task = task;
     return task;
@@ -105,6 +108,7 @@ struct task* init_task(void* entry)
 
 void init_multitasking(struct multiboot_info* multiboot_nfo)
 {
+	init_task(idle);
 	if (multiboot_nfo->mbs_mods_count == 0)
 	{
 		kprintf("No modules loaded. Starting test tasks\n");
@@ -135,6 +139,11 @@ uint32_t sys_getPid()
 
 uint8_t deleteTask(uint32_t pid)
 {
+	if(pid==0)
+	{
+		kprintf("\nTASK_ZERO_PERMISSION_DENIED\n");
+		return TASK_ZERO_PERMISSION_DENIED;
+	}
 	struct task *actual,*prev=NULL;
 	for(actual = first_task; actual != NULL; actual = actual->next)
 	{
