@@ -10,6 +10,7 @@ Code-names 'til yet:
 * Cranberry
 * Dragon Fruit
 * Elderberry
+* Feijoa
 
 # Build
 execute `make` in the kernel directory to build the kernel.

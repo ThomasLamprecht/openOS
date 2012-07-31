@@ -46,11 +46,18 @@ static void task_b(void)
 static void task_c(void)
 {
 	int j;
+	uint8_t sec,min,hour;
 	while(1)
 	{
+		outb(0x70,0x04);
+		hour = inb(0x71);
+		outb(0x70,0x02);
+		min = inb(0x71);
 		outb(0x70,0x00);
-		kprintf("%d\n",inb(0x71));
-		for(j=0;j<1000000;j++)
+		sec = inb(0x71);
+		
+		kprintf("%d:%d:%d\n",hour,min,sec);
+		for(j=0;j<8000000;j++)
 			continue;
 	}
 	asm ("int $0x30"::"a"(SYSCALL_EXIT), "b"(0));
