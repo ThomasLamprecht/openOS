@@ -6,13 +6,6 @@
  * A lot missing, maybe I'll port linus' version
  */
 
-static int x = 0; // actual x and y cursor position
-static int y = OSBAR;
-
-static char* video = (char*) 0xb8000; // start of the console memory
-
-static int kprintf_res = 0;
-
 static void kputccolor(char c, uint8_t color) // When porting on a tty this and the defines must be adapted
 {
 	if ((c == '\n') || (x >= XSIZE))
@@ -24,27 +17,21 @@ static void kputccolor(char c, uint8_t color) // When porting on a tty this and 
 			return;
 		}
 	}
-//	if (c == '\n')
-//	{
-//		return;
-//	}
 	if (y >= YSIZE)
 	{
 		int i;
-		for (i = 0; i < 2 * (YSIZE-1) * XSIZE; i++)
+		for (i = 0; i < 2 * (YSIZE-1) * XSIZE; i++)  // copy every line one up
 		{
 			video[i] = video[i + 160]; // TODO 2 * XSIZE ?!
 		}
-
 		for (; i < 2 * YSIZE * XSIZE; i++)
 		{
 			video[i] = 0;
 		}
 		y--;
 	}
-
-	video[2 * (y * XSIZE + x)] = c;
-	video[2 * (y * XSIZE + x) + 1] = color & 0x0F;
+	
+	kputchar(c, x,y, (color & 0x0F),(default_bg & 0xF0));
 
 	x++;
 	kprintf_res++;
@@ -52,7 +39,13 @@ static void kputccolor(char c, uint8_t color) // When porting on a tty this and 
 
 static void kputc(char c)
 {
-	kputccolor(c, (uint8_t)0x07); // Using standart color...
+	kputccolor(c, (uint8_t)((default_bg & 0xF0) | (default_fg & 0x0F))); // Using standart color...
+}
+
+static void kputchar(char c, uint8_t x, uint8_t y, uint8_t fg, uint8_t bg)
+{
+	video[2 * (y * XSIZE + x)] = c;
+	video[2 * (y * XSIZE + x) + 1] =  (bg & 0xF0) | (fg & 0x0F);
 }
 
 static void kputs(const char* s)
