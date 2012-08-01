@@ -1,5 +1,6 @@
-#include <stdint.h>
+
 #include "syscall.h"
+#include <stdint.h>
 
 uint16_t* videomem = (uint16_t*) 0xb8000;
 
@@ -13,7 +14,7 @@ void _start(void)
 	// syscall(SYSCALL_PUTC); F*CK! -.- "searching solution" is on the roadmap :)
 	
 	asm ("int $0x30"::"a"(SYSCALL_PRINTF), "b"(test) );
-
+	getPID();
 	exit(0);
 	
 	while(1);

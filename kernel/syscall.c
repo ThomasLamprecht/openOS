@@ -26,6 +26,11 @@ struct cpu_state* syscall(struct cpu_state* cpu)
 				kprintf("__EXIT__ (%d)-> %d",sys_getPid(),cpu->ebx);
 			break;
 		}
+		case SYSCALL_GETPID:
+		{
+			cpu->eax = sys_getPid();
+			break;
+		}
 		default:
 			kprintf("Unknown Syscall! %d\n",cpu->eax);
 			break;

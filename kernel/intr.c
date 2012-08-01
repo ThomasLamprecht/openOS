@@ -222,7 +222,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
 			new_cpu = schedule(cpu);
 			tss[1] = (uint32_t) (new_cpu + 1);
 		}
-		else if(cpu->intr == 0x21) // Keyboard interupt
+		else if(cpu->intr == 0x21) // keyboard interupt
 		{
 			handle_keystroke();
 		}
@@ -234,7 +234,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
         // EOI to master-PIC
         outb(0x20, 0x20);
     }
-	else if (cpu->intr == 0x30) // Got a Syscall here, so lets call him :)
+	else if (cpu->intr == 0x30) // got a Syscall, so lets call him :)
 	{
 		new_cpu = syscall(cpu);
 	}
@@ -243,7 +243,7 @@ struct cpu_state* handle_interrupt(struct cpu_state* cpu)
         kprintf("Unknown interrupt \"%d\"\n",cpu->intr);
         while(1)
         {
-            asm volatile("cli; hlt"); // Prozessor anhalten
+            asm volatile("cli; hlt"); // halt processor
         }
     }
     return new_cpu;
