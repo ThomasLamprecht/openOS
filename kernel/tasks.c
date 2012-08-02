@@ -15,6 +15,7 @@ static uint32_t max_pid = 0;
 
 static void idle(void)
 {
+//	asm volatile ("hlt"); // saves power
 	asm ("int $0x30"::"a"(SYSCALL_YIELD)); // Should now be faster wenn idle;
 	while(1){/*Waiting so hard*/}
 }

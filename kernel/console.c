@@ -2,11 +2,12 @@
 #include <stdint.h>
 #include "console.h"
 
-/*
- * A lot missing, maybe I'll port linus' version
- */
+static int x = 0, y = OSBAR; // actual x and y cursor position
+static int kprintf_res = 0;
+static uint8_t default_fg = COLOR_LIGHTGREEN, default_bg = COLOR_BLACK;
+static char* video = (char*) 0xb8000; // start of the console memory
 
-static void kputccolor(char c, uint8_t color) // When porting on a tty this and the defines must be adapted
+void kputccolor(char c, uint8_t color) // When porting on a tty this and the defines must be adapted
 {
 	if ((c == '\n') || (x >= XSIZE))
 	{
@@ -42,7 +43,7 @@ static void kputc(char c)
 	kputccolor(c, (uint8_t)((default_bg & 0xF0) | (default_fg & 0x0F))); // Using standart color...
 }
 
-static void kputchar(char c, uint8_t x, uint8_t y, uint8_t fg, uint8_t bg)
+void kputchar(char c, uint8_t x, uint8_t y, uint8_t fg, uint8_t bg)
 {
 	video[2 * (y * XSIZE + x)] = c;
 	video[2 * (y * XSIZE + x) + 1] =  (bg & 0xF0) | (fg & 0x0F);
